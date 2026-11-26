@@ -23,6 +23,9 @@ CREATE TABLE IF NOT EXISTS role_menus (
   KEY idx_role_menus_menu (menu_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='角色菜单关联表';
 
+-- 清理已合并的旧「新闻列表 / 视频列表」菜单授权（菜单 id 7/8/11 已删除）
+DELETE FROM role_menus WHERE menu_id IN (7, 8, 11);
+
 -- 内置角色：固定 id，方便下面的权限种子引用
 INSERT IGNORE INTO roles (id, code, name, description, sort, status) VALUES
   (1, 'super_admin', '超级管理员', '系统内置角色，默认拥有全部菜单与操作权限，不可删除、不可停用', 10, 1),

@@ -26,7 +26,8 @@ INSERT IGNORE INTO menus (id, parent_id, title, path, icon, component, sort, sta
 
 -- 资讯：目录 + 统一列表（新闻/视频在同一页按分类筛选）
 -- id 用 9/10，避开库里历史遗留的重复「角色管理」(id=6)
-DELETE FROM role_menus WHERE menu_id IN (7, 8, 10, 11);
+-- 注意：role_menus 的清理放在 db/role.sql（该文件才创建 role_menus 表），
+--       否则全新库执行本脚本时会因表不存在而失败。
 DELETE FROM menus WHERE id IN (7, 8, 11);
 UPDATE menus SET title = '资讯列表', path = '/info/list', icon = 'List',
                  component = 'info/list/index', sort = 10

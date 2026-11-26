@@ -77,6 +77,134 @@ goProject/
 
 依赖方向为单向：`cmd → handler → service`，`cmd → repository`，两者都依赖 `config`；`service` 通过接口依赖 `repository` 的数据访问与 `auth.Manager` 的签发能力。`handler` 只声明自己需要的接口（`Database` / `AuthService` / `TokenParser`），不直接引用 `repository`，所以测试里塞假实现就能跑。
 
+## 从零启动（clone 后完整步骤）
+
+这一节面向刚 clone 仓库的机器：从装依赖到登录后台，按顺序执行即可。已经跑起来的环境可跳到 [快速开始](#快速开始) 看单项命令。
+
+### 1. 前置条件
+
+| 软件 | 要求 | 备注 |
+| --- | --- | --- |
+| Go | **1.27.4+** | `go.mod` 声明；本机未加入 PATH 时用 `C:\Program Files\Go\bin\go.exe` |
+| Node.js | **20.19+ 或 22.12+** | Vite 8 的硬性要求，低版本 `npm install` 会报 engine 错误 |
+| MySQL | **8.0+**（本机 8.4） | SQL 用到 `utf8mb4_0900_ai_ci`，5.7 不支持 |
+| Git | 任意新版 | 需要能访问 GitHub（SSH 或 HTTPS） |
+
+### 2. clone 仓库
+
+```bash
+git clone git@github.com:PengWarehouse/houtai.git
+cd houtai
+```
+
+没配 SSH key 就用 HTTPS：`git clone https://github.com/PengWarehouse/houtai.git`。
+
+> 仓库里**只有** `configs/.env.example` 模板。含数据库密码、JWT 密钥、DeepSeek key 的 `configs/.env` 在 `.gitignore` 里，不会随仓库分发，必须自己创建。
+
+### 3. 建数据库
+
+用 Navicat 或 mysql 命令行建一个空库（名字可改，但要和后面的 env 一致）：
+
+```sql
+CREATE DATABASE IF NOT EXISTS mydb
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_0900_ai_ci;
+```
+
+### 4. 配置后端
+
+复制模板：
+
+```bash
+cp configs/.env.example configs/.env        # Git Bash / macOS / Linux
+Copy-Item configs/.env.example configs/.env # PowerShell
+```
+
+打开 `configs/.env`，至少确认这几项：
+
+| 变量 | 是否必填 | 说明 |
+| --- | --- | --- |
+| `DB_PASSWORD` | **必填** | 本机 MySQL root 密码；写错会在迁移/启动时报 `Access denied` |
+| `DB_NAME` | 保持一致 | 默认 `mydb`，若第 3 步改了库名，这里同步改 |
+| `JWT_SECRET` | 强烈建议 | 至少 16 位，可用 `openssl rand -hex 32` 生成；**留空则每次重启都会生成临时密钥，已登录的 token 全部失效** |
+| `DEEPSEEK_API_KEY` | 可选 | 只有 AI 问询/提取需要；不配也能启动，调用 AI 接口会返回「未配置」提示 |
+
+端口默认 `APP_PORT=1104`、前端默认 `5173`，一般不用动。密钥只放这里，**不要提交到仓库**。
+
+### 5. 建表并初始化数据
+
+在项目根目录执行（`configs/.env` 用相对路径定位，必须在根目录）：
+
+```bash
+go run ./cmd/migrate
+```
+
+未把 Go 加入 PATH 时：
+
+```powershell
+& 'C:\Program Files\Go\bin\go.exe' run ./cmd/migrate
+```
+
+默认按 `db/schema.sql` → `db/seed.sql` → `db/menu.sql` → `db/role.sql` 顺序执行，分别建 `users` / `info_items`、插入超管、建菜单、建角色与授权。所有脚本幂等，可重复执行。成功输出类似：
+
+```
+INFO database connected addr=127.0.0.1:3306 db=mydb
+INFO applied file=db/schema.sql cost=2ms
+INFO applied file=db/seed.sql cost=1ms
+INFO applied file=db/menu.sql cost=4ms
+INFO applied file=db/role.sql cost=42ms
+INFO migrate done files=4
+```
+
+### 6. 启动后端
+
+```bash
+go run ./cmd/server
+```
+
+看到 `level=INFO msg="server starting" ... addr=0.0.0.0:1104` 即成功。另开终端验证：
+
+```bash
+curl http://127.0.0.1:1104/healthz
+# {"code":200,"message":"healthy","data":{"db":"up"}}
+```
+
+启动时会先 Ping 数据库，连不上会直接退出并打印原因。`Ctrl+C` 优雅退出。
+
+### 7. 启动前端
+
+**新开一个终端**（后端要保持运行）：
+
+```bash
+cd admin-web
+npm install
+npm run dev
+```
+
+浏览器打开 **http://localhost:5173**。前端 env 文件已经在仓库里，通常不用改；页面请求 `/api/**` 会由 Vite 代理转发到 `http://127.0.0.1:1104`，浏览器视角同源，不产生跨域。改了任何 `.env` 都要重启 dev server 才生效。
+
+### 8. 登录并验证
+
+用预置超管登录：**`admin` / `Admin@123456`**（登录后建议立刻在顶栏用户菜单里改密码）。按顺序验证：
+
+1. 左侧菜单出现「仪表盘 / 系统管理 / 资讯」；
+2. 系统管理 → 用户管理、角色管理可正常打开（分页每页默认 50）；
+3. 资讯 → 资讯列表可切换分类、按标题搜索；
+4. 仪表盘输入问题可得到 AI 回复（需第 4 步配好 key）；选「新闻」或「视频」后问询，可勾选候选条目加入数据库。
+
+### 常见问题
+
+| 现象 | 原因 | 处理 |
+| --- | --- | --- |
+| `Access denied ... using password: NO` | 没复制模板或 `DB_PASSWORD` 为空 | 建好 `configs/.env` 并填密码 |
+| 迁移报 `Unknown database 'mydb'` | 库没建 | 回到第 3 步 |
+| 迁移报 `Unknown table 'role_menus'` | 用了旧版 SQL | 拉最新代码重新迁移（已将清理语句移到 `db/role.sql`） |
+| 前端能打开但接口 404 / 一直转圈 | 后端没启动或端口不一致 | 确认 1104 已监听、`VITE_PROXY_TARGET` 指向它 |
+| 浏览器报 CORS | 前端 `VITE_API_BASE_URL` 被改成绝对地址 | 改回 `/api` 走代理，或把前端来源加进后端 `CORS_ALLOW_ORIGINS` |
+| `npm install` 报 engine 不匹配 | Node 版本过低 | 升级到 20.19+ 或 22.12+ |
+| 刷新后显示未登录 | token 过期，或重启后 `JWT_SECRET` 变了 | 重新登录；固定 `JWT_SECRET` 可避免重启失效 |
+| 侧边栏图标空白 | 自定义图标没全局注册 | 见 `admin-web/README.md` 的「自定义图标」 |
+
 ## 快速开始
 
 ### 1. 准备数据库
