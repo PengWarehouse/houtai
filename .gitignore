@@ -1,0 +1,31 @@
+# 编译产物
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+goProject
+bin/
+dist/
+
+# 测试与覆盖率
+*.test
+*.out
+coverage.*
+
+# 依赖目录（vendor 按需保留，这里默认忽略）
+vendor/
+
+# 本地环境与 IDE
+/configs/.env
+.env.local
+.idea/
+.vscode/
+*.swp
+
+# WorkBuddy 本地工作数据
+.workbuddy/
+
+# 系统文件
+.DS_Store
+Thumbs.db
