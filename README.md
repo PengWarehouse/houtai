@@ -87,7 +87,7 @@ goProject/
 | --- | --- | --- |
 | Go | **1.27.4+** | `go.mod` 声明；本机未加入 PATH 时用 `C:\Program Files\Go\bin\go.exe` |
 | Node.js | **20.19+ 或 22.12+** | Vite 8 的硬性要求，低版本 `npm install` 会报 engine 错误 |
-| MySQL | **8.0+**（本机 8.4） | SQL 用到 `utf8mb4_0900_ai_ci`，5.7 不支持 |
+| MySQL | **5.7+**（本机 8.4） | 建表用 `utf8mb4_unicode_ci`，5.7 / 8.0 都兼容 |
 | Git | 任意新版 | 需要能访问 GitHub（SSH 或 HTTPS） |
 
 ### 2. clone 仓库
@@ -108,7 +108,7 @@ cd houtai
 ```sql
 CREATE DATABASE IF NOT EXISTS mydb
   DEFAULT CHARACTER SET utf8mb4
-  DEFAULT COLLATE utf8mb4_0900_ai_ci;
+  DEFAULT COLLATE utf8mb4_unicode_ci;
 ```
 
 ### 4. 配置后端
@@ -214,7 +214,7 @@ npm run dev
 ```sql
 CREATE DATABASE IF NOT EXISTS mydb
   DEFAULT CHARACTER SET utf8mb4
-  DEFAULT COLLATE utf8mb4_0900_ai_ci;
+  DEFAULT COLLATE utf8mb4_unicode_ci;
 ```
 
 ### 2. 填写连接信息

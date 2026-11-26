@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS menus (
   PRIMARY KEY (id),
   KEY idx_menus_parent (parent_id),
   KEY idx_menus_sort (sort)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='菜单表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='菜单表';
 
 -- 初始菜单：固定 id 便于子菜单引用父级，INSERT IGNORE 保证可重复执行
 INSERT IGNORE INTO menus (id, parent_id, title, path, icon, component, sort, status) VALUES

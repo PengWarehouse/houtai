@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS roles (
   PRIMARY KEY (id),
   UNIQUE KEY uk_roles_code (code),
   KEY idx_roles_sort (sort)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='角色表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色表';
 
 -- 角色-菜单关联：一行代表某角色可访问某个菜单
 -- 注意：super_admin 不写关联记录，服务层直接放行全部菜单（默认拥有所有权限）
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS role_menus (
   created_at DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (role_id, menu_id),
   KEY idx_role_menus_menu (menu_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='角色菜单关联表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色菜单关联表';
 
 -- 清理已合并的旧「新闻列表 / 视频列表」菜单授权（菜单 id 7/8/11 已删除）
 DELETE FROM role_menus WHERE menu_id IN (7, 8, 11);

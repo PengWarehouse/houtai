@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
     KEY idx_users_role (role)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户表';
+  COLLATE = utf8mb4_unicode_ci COMMENT = '用户表';
 
 -- 资讯条目：AI 问询提取后，由用户勾选入库的新闻 / 视频
 -- kind = news（新闻）或 video（视频）；url 前缀唯一索引用于兜底去重
@@ -33,4 +33,4 @@ CREATE TABLE IF NOT EXISTS info_items (
     KEY idx_info_items_kind_created (kind, created_at)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_0900_ai_ci COMMENT = '资讯条目表';
+  COLLATE = utf8mb4_unicode_ci COMMENT = '资讯条目表';
